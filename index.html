@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html>
+   <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1">
+      <script src="js/jquery-1.11.1.min.js"></script>
+      <script type="text/javascript" src="js/jquery.mobile-1.4.2.min.js"></script>
+      <script src="js/jquery.timer.js"></script>
+      <link rel="stylesheet" href="css/comptiaaplus220801lite.min.css"/>
+      <link rel="stylesheet" href="css/jquery.mobile.icons.min.css"/>
+      <link rel="stylesheet" href="css/jquery.mobile.structure-1.4.2.min.css"/>
+      <script src="js/questions.js"></script>
+      <script src="js/questions-api.js"></script>
+      <script src="cordova.js"></script>
+      <script type="text/javascript">
+         var questions;
+         var currentQuestionNumber;
+         var currentExam; //1 = Virtual Exam, 2 = Short Exam, 3 = Practice Questions
+         var answers;
+         var time;
+         var timer;
+
+         function hasConnection(){
+           return true;
+         }
+         
+         document.addEventListener("deviceready", onDeviceReady, false);
+
+
+         function onDeviceReady(){
+
+
+           if(getPlatform() == 'android'){
+              $('.pro-version-link').attr('href','https://play.google.com/store/apps/details?id=com.jlojic.comptiaaplus220801pro');
+           }else if(getPlatform() == 'ios'){
+              $('.pro-version-link').attr('href','');
+           }else if(getPlatform() == 'amazon'){
+              $('.pro-version-link').attr('href','http://www.amazon.com/gp/mas/dl/android?p=com.jlojic.comptiaaplus220801pro');
+           }
+
+
+           if(getPlatform() == 'android' || getPlatform() == 'amazon'){
+             $('#exit-button').removeClass('visibility-hidden');
+           } else if(getPaltform() == 'ios'){
+           }
+           
+            document.addEventListener("backbutton", onBackButton, false);
+
+         	document.addEventListener("pause", onPause, false);
+         	document.addEventListener("resume", onResume, false);
+         }
+
+         function onBackButton(){
+
+           currentPage = getCurrentPage();
+           if(currentPage == '#main'){
+				$('#exit-popup').popup('open');
+           }else if(currentPage == '#exam-page'){
+               $('#quitExamPopup').popup('open');
+           }else if(currentPage == '#result-page'){
+		
+           }else if(currentPage == '#top-rankers-page'){
+				$.mobile.changePage('#main');
+           }else if(currentPage == '#help'){
+				$.mobile.changePage('#main');
+           }else{
+           		$.mobile.changePage('#main');
+           }
+         }
+
+         function onPause(){
+           currentPage = getCurrentPage();
+           if(currentPage == '#exam-page'){
+              timer.stop();
+           }
+            
+         }
+
+         function onResume(){
+           currentPage = getCurrentPage();
+           if(currentPage == '#exam-page'){
+              timer.resume();
+           }
+         }
+
+
+
+         $(document).ready(function(){
+          // onDeviceReady();
+           $('input[type=checkbox]').click(function(){
+ 
+                if($('#exam-response-a').is(':checked') == true)
+                   a = 'A';
+                else
+                   a = '';
+                if($('#exam-response-b').is(':checked') == true)
+                  b = 'B';
+                else
+                  b = '';
+                if($('#exam-response-c').is(':checked') == true)
+                  c = 'C';
+                else
+                   c = ''; 
+                if($('#exam-response-d').is(':checked') == true)
+                   d = 'D';
+                else
+                   d = '';
+                if($('#exam-response-e').is(':checked') == true)
+                   e = 'E';
+                else
+                   e = '';
+                r = a + b + c + d + e;
+                answers[currentQuestionNumber-1] = r;
+  
+
+
+           }).checkboxradio('refresh');
+
+
+         });// end of document.ready
+         
+         function gotoExamPage(){
+           questions = getVirtualExamQuestions();
+
+           currentQuestionNumber = 1;
+           $('#exam-page-timer-text').html('00:00:00');
+           $('#exam-page-title').html('1 of ' + questions.length);
+           $("#exam-page .question").html('<b>1. </b>' + questions[0].question);
+           $("#exam-page .option1").html('<b>A. </b>' + questions[0].option1);
+           $("#exam-page .option2").html('<b>B. </b>' + questions[0].option2);
+           $("#exam-page .option3").html('<b>C. </b>' + questions[0].option3);
+           $("#exam-page .option4").html('<b>D. </b>' + questions[0].option4);
+           $("#exam-page .option5").html('<b>E. </b>' + questions[0].option5);
+           $.mobile.changePage('#exam-page');
+           $('#exam-previous-button').addClass('visibility-hidden');           
+           $('#exam-next-button').removeClass('visibility-hidden');   
+           $('#exam-ques-num').val('');
+  
+           answers = new Array();     
+           uncheckExamCheckboxes();
+
+           //Start the timer
+           
+           time = 90 * 60;// will be in seconds
+
+           timer = $.timer(function(){
+                    hour = parseInt(time/(60*60));
+                    if(hour<=9)
+                      hour = '0'+hour;
+                    min = parseInt(time%(60*60)/60);
+                    if(min<=9)
+                      min = '0'+min;
+                    if(time%60 == 0){
+                      sec = 0;
+                    }
+                    else
+                      sec = sec - 1;
+                    if(sec<=9)
+                      sec_text = '0'+sec;
+                    else
+                      sec_text = sec;
+                    if(time%60 == 0){
+                      sec = 60;
+                    } 
+
+                   $('#exam-page-timer-text').html(hour + ":" + min + ":" + sec_text);
+                   time--;
+                   if(time == -1){
+                     $('#timeOverPopup').popup('open');
+                     timer.stop();
+                   }
+           });
+           timer.set({time:1000, autostart:true});
+         }
+
+         function gotoNextExamQuestion(){
+           currentQuestionNumber++;
+           n = currentQuestionNumber - 1;
+           $('#exam-page-title').html(currentQuestionNumber + ' of ' + questions.length);
+           $("#exam-page .question").html('<b>' + (n+1) + '. </b>' + questions[n].question);
+           $("#exam-page .option1").html('<b>A. </b>' + questions[n].option1);
+           $("#exam-page .option2").html('<b>B. </b>' + questions[n].option2);
+           $("#exam-page .option3").html('<b>C. </b>' + questions[n].option3);
+           $("#exam-page .option4").html('<b>D. </b>' + questions[n].option4);
+           $("#exam-page .option5").html('<b>E. </b>' + questions[n].option5);
+           if(currentQuestionNumber == 2){
+             $('#exam-previous-button').removeClass('visibility-hidden');
+           }
+           if(currentQuestionNumber == questions.length){
+             $('#exam-next-button').addClass('visibility-hidden');
+           }
+
+           uncheckExamCheckboxes();
+
+           if(answers[currentQuestionNumber - 1] != undefined){
+             answer = answers[currentQuestionNumber - 1];
+             for(i=0;i<answer.length;i++){
+               c = answer.charAt(i);
+               
+               if(c == 'A'){
+                  $("#exam-response-a").prop('checked', true).checkboxradio('refresh');
+               }else if(c == 'B'){
+                  $("#exam-response-b").prop('checked', true).checkboxradio('refresh');
+               }else if(c == 'C'){
+                  $("#exam-response-c").prop('checked', true).checkboxradio('refresh');
+               }else if(c == 'D'){
+                  $("#exam-response-d").prop('checked', true).checkboxradio('refresh');
+               }else if(c == 'E'){
+                  $("#exam-response-e").prop('checked', true).checkboxradio('refresh');
+               }
+             }
+           }
+
+         }
+
+         function gotoPreviousExamQuestion(){
+           currentQuestionNumber--;
+           n = currentQuestionNumber - 1;
+           $('#exam-page-title').html(currentQuestionNumber + ' of ' + questions.length);
+           $("#exam-page .question").html('<b>' + (n+1) + '. </b>' + questions[n].question);
+           $("#exam-page .option1").html('<b>A. </b>' + questions[n].option1);
+           $("#exam-page .option2").html('<b>B. </b>' + questions[n].option2);
+           $("#exam-page .option3").html('<b>C. </b>' + questions[n].option3);
+           $("#exam-page .option4").html('<b>D. </b>' + questions[n].option4);
+           $("#exam-page .option5").html('<b>E. </b>' + questions[n].option5);
+           if(currentQuestionNumber == questions.length - 1){
+             $('#exam-next-button').removeClass('visibility-hidden');
+           }
+           if(currentQuestionNumber == 1){
+             $('#exam-previous-button').addClass('visibility-hidden');
+           }
+           
+           uncheckExamCheckboxes();
+           
+           if(answers[currentQuestionNumber - 1] != undefined){
+             answer = answers[currentQuestionNumber - 1];
+             for(i=0;i<answer.length;i++){
+               c = answer.charAt(i);
+               
+               if(c == 'A'){
+                  $("#exam-response-a").prop('checked', true).checkboxradio('refresh');
+               }else if(c == 'B'){
+                  $("#exam-response-b").prop('checked', true).checkboxradio('refresh');
+               }else if(c == 'C'){
+                  $("#exam-response-c").prop('checked', true).checkboxradio('refresh');
+               }else if(c == 'D'){
+                  $("#exam-response-d").prop('checked', true).checkboxradio('refresh');
+               }else if(c == 'E'){
+                  $("#exam-response-e").prop('checked', true).checkboxradio('refresh');
+               }
+             }
+           }
+
+         }
+
+         function uncheckExamCheckboxes(){
+           $("#exam-response-a").attr('checked', false).checkboxradio('refresh');
+           $("#exam-response-b").attr('checked', false).checkboxradio('refresh');
+           $("#exam-response-c").attr('checked', false).checkboxradio('refresh');
+           $("#exam-response-d").attr('checked', false).checkboxradio('refresh');
+           $("#exam-response-e").attr('checked', false).checkboxradio('refresh');
+
+         }
+       
+         function onClickQuitExamButton(){
+           $('#quitExamPopup').popup('open');
+         }
+
+
+         function onClickNoButtonQuitExamPopup(){
+            $('#quitExamPopup').popup('close')
+         }
+
+         function onClickYesButtonQuitExamPopup(){
+            timer.stop();
+            $('#quitExamPopup').popup('close')
+            $.mobile.changePage('#main');
+         }
+
+
+         function onClickShowExamResultButton(){
+           $('#showExamResultPopup').popup('open');
+         }
+
+         function onClickNoButtonShowExamResultPopup(){
+            $('#showExamResultPopup').popup('close')
+         }
+
+         function onClickYesButtonShowExamResultPopup(){
+            timer.stop();
+            $('#showExamResultPopup').popup('close')
+            gotoExamResultPage();
+         }
+
+         function gotoExamResultPage(){
+            correct = 0;
+            total_ques = questions.length;
+            for(i=0;i<questions.length;i++){
+              if(questions[i].answer == answers[i]){
+                correct++;
+              }
+            }
+
+            
+            time_taken = (90*60) - time;
+
+            time_taken = (time_taken/60).toFixed(2);
+
+            per = ((correct/total_ques)*100).toFixed(2);
+            d = '<table class="result-table" style="width:100%;">' + 
+                   '<tr>' + 
+                      '<td>' + '<b>Total Questions</b>' + '</td>' +
+                      '<td>' + total_ques + '</td>' +  
+                   '</tr>' +
+                   '<tr>' + 
+                      '<td>' + '<b>Correct Answers</b>' + '</td>' +
+                      '<td>' + correct + '</td>' +  
+                   '</tr>' +
+                   '<tr>' + 
+                      '<td>' + '<b>Time Taken</b>' + '</td>' +
+                      '<td>' + time_taken + ' min </td>' +  
+                   '</tr>' +
+                 '</table>';
+                  
+            $('#virtual-exam-result-stats').html(d);
+            $('#result-inner-bar').css('width', per + '%');
+            $('#result-per-text').html('Score: ' + per + '%');
+
+            $.mobile.changePage('#result-page');
+         }
+
+
+         function getPlatform(){
+           platform = 'Unknown';
+           if(device.platform == "Android"){
+              platform = 'android';
+           }else if(device.platform == "iOS"){
+              platform = 'ios';
+           }
+
+           //platform = 'android';
+           //platform = 'ios';
+           //platform = 'blackberry';
+           //platform = 'windowsphone';
+           platform = 'amazon';
+
+           return platform;
+         }
+
+         function onClickExitButton(){ 
+           $('#exit-popup').popup('open');
+         }
+
+         function onClickYesButtonExitPopup(){
+           navigator.app.exitApp();
+         }
+
+         function onClickNoButtonExitPopup(){
+           $('#exit-popup').popup('close');           
+         }
+
+        function gotoTopRankersPage(){
+          $('#top-rankers-page-content').html('<p style="text-align:center;">Retrieving list...</p>');
+          $.ajax({
+		url: 'http://www.jlojic.com/comptiaaplus220801/gettoprankers?api_key=abc123&limit=10',
+                crossDomain: true,
+                dataType: 'jsonp',
+                success: function(response){
+                    data = '<table border="1" class="top-rankers-table">';
+                    data = data + '<tr><th>Rank</th><th colspan="2">Ranker Info</th></tr>';
+                    for(i=0;i<response.length;i++){
+                       data = data + '<tr>';
+                       data = data + '<td rowspan="5" style="text-align: center;">' + (i+1) + '</td>';
+                       data = data + '<td style="background-color:#98FB98"><b>Name</b></td>';
+                       data = data + '<td style="background-color:#98FB98">' + response[i].user_name + '</td>';
+                       data = data + '</tr>';
+                       data = data + '<tr>';
+                       data = data + '<td><b>Score</b></td>';
+                       data = data + '<td>' + response[i].user_score + '</td>';
+                       data = data + '</tr>';
+                       data = data + '<tr>';
+                       data = data + '<td><b>Time Taken</b></td>';
+                       data = data + '<td>' + response[i].time_taken + '</td>';
+                       data = data + '</tr>';
+                       data = data + '<tr>';
+                       data = data + '<td><b>Location</b></td>';
+                       data = data + '<td>' + response[i].user_city + ', ' + response[i].user_country + '</td>';
+                       data = data + '</tr>';
+                       data = data + '<tr>';
+                       data = data + '<td><b>Device</b></td>';
+                       data = data + '<td>' + response[i].user_device + '</td>';
+                       data = data + '</tr>';
+                    }
+                    data = data + '</table>';
+                    $('#top-rankers-page-content').html(data);
+                },
+                error: function(e){
+                  
+                }
+
+	  });
+          $.mobile.changePage('#top-rankers-page');
+        }
+
+
+        function getUUID(){
+          return device.uuid;
+        }
+
+
+        function getCurrentPage(){
+          id = $.mobile.activePage.attr('id');
+          return '#' + id;
+        }
+
+      </script>
+      <style>
+         .visibility-hidden{
+            visibility: hidden;
+         }
+
+         .display-none{
+            display:none;
+         }
+         .result-table{
+            border-collapse: collapse;
+         }
+         .result-table td{
+            padding: 5px;
+            border: 1px solid #5E554F;
+         }
+         .top-rankers-table{
+            width: 100%;
+            border-collapse: collapse;
+         }
+         .top-rankers-table td, .top-rankers-table th{
+            padding: 5px;
+            border: 1px solid #5E554F;
+         }
+         .top-rankers-table .end-tr{
+            border-bottom:2px solid #02ACF2;
+         }
+         .top-rankers-table th{
+            background-color: #AB9B90;
+         }
+
+
+
+
+
+         #result-outer-bar{
+          width: 100%;
+          height: 20px;
+          background-color: #000000;
+         }
+         #result-inner-bar{
+          height: 100%;
+          background-color: green;
+         }
+
+      </style>
+   </head>
+
+
+   <body>
+      <div data-role="page" id="main">
+         <div data-role="header" data-position="fixed" data-tap-toggle="false">
+            <h1>Comptia A+ 220-801 - Lite</h1>
+            <a href="javascript: onClickExitButton()" data-role="button" id="exit-button" class="visibility-hidden">Exit</a> 
+            <div data-role="popup" data-history="false" id="exit-popup" data-position-to="window"  data-dismissible="false">
+	       <p>Are you sure want to exit<p>
+               <fieldset class="ui-grid-a">
+	          <div class="ui-block-a"><a href="javascript: onClickYesButtonExitPopup()" data-role="button">Yes</a></div>
+	          <div class="ui-block-b"><a href="javascript: onClickNoButtonExitPopup()" data-role="button">No</a></div>	   
+               </fieldset>
+            </div>
+         </div>     
+         <div data-role="content">
+            <ul data-role="listview" data-inset="true">
+               <li><a href="javascript: gotoExamPage(1)">Virtual Exam</a></li>
+               <li><a href="javascript: gotoTopRankersPage()">Top Rankers</a></li>
+               <li><a href="#help">Help</a></li>
+               <li><a class="pro-version-link" href="#" target="_blank">Get Pro Version</a></li>
+            </ul>
+         </div>
+      </div>
+
+      <!-- Virtual Exam and Short Exam-->
+      <div id="exam-page" data-role="page">
+         <div data-role="header" data-position="fixed" data-tap-toggle="false">
+            <h1 id="exam-page-title">Virtual Exam</h1>
+            <a href="javascript: onClickQuitExamButton()" data-role="button">Quit</a> 
+            <a href="javascript: onClickShowExamResultButton()" data-role="button">Show Result</a> 
+            <div data-role="popup" data-history="false" id="quitExamPopup" data-position-to="window"  data-dismissible="false">
+	       <p>Are you sure want to quit<p>
+               <fieldset class="ui-grid-a">
+	          <div class="ui-block-a"><a href="javascript: onClickYesButtonQuitExamPopup()" data-role="button">Yes</a></div>
+	          <div class="ui-block-b"><a href="javascript: onClickNoButtonQuitExamPopup()" data-role="button">No</a></div>	   
+               </fieldset>
+            </div>
+            <div data-role="popup" data-history="false" id="showExamResultPopup" data-position-to="window"  data-dismissible="false">
+	       <p>Have you completed the exam<p>
+               <fieldset class="ui-grid-a">
+	          <div class="ui-block-a"><a href="javascript: onClickYesButtonShowExamResultPopup()" data-role="button">Yes</a></div>
+	          <div class="ui-block-b"><a href="javascript: onClickNoButtonShowExamResultPopup()" data-role="button">No</a></div>	   
+               </fieldset>
+            </div>
+            <div data-role="popup" data-history="false" id="timeOverPopup" data-position-to="window"  data-dismissible="false">
+	       <p style="text-align:center;">Time Over<p>
+               <a href="javascript: gotoExamResultPage();" data-role="button">Okay</a>
+            </div>
+         </div><!-- end of header -->
+         <div data-role="content">
+            <div class="question"></div>
+            <div class="option1"></div>
+            <div class="option2"></div>
+            <div class="option3"></div>
+            <div class="option4"></div>
+            
+            <div data-role="fieldcontain">
+               <fieldset data-role="controlgroup" data-type="horizontal">
+	          <input type="checkbox" name="examResponseA" id="exam-response-a" value="A"/>
+	          <label for="exam-response-a">A</label>
+                  <input type="checkbox" name="examResponseB" id="exam-response-b" value="B"/>
+	          <label for="exam-response-b">B</label>
+                  <input type="checkbox" name="examResponseC" id="exam-response-c" value="C"/>
+	          <label for="exam-response-c">C</label>
+                  <input type="checkbox" name="examResponseD" id="exam-response-d" value="D"/>
+	          <label for="exam-response-d">D</label>
+                  
+               </fieldset>
+            </div>
+         </div>
+         <div data-role="footer" class="ui-bar" data-position="fixed" data-tap-toggle="false">
+            <h1>
+               <a href="javascript: gotoPreviousExamQuestion()" data-role="button" class="" id="exam-previous-button">Prev</a>
+               <span id="exam-page-timer-text">00:00:00</span>
+               <a href="javascript: gotoNextExamQuestion()" data-role="button" id="exam-next-button">Next</a>
+            </h1>
+         </div>
+      </div>
+
+
+      <!-- TOp rankers page -->
+      <div id="top-rankers-page" data-role="page">
+         <div data-role="header" data-position="fixed" data-tap-toggle="false">
+            <h1>Top Rankers</h1>
+            <a href="#main" data-role="button">Back</a> 
+         </div>
+         <div data-role="content" >
+            <p>Please get the Pro version to submit your score to our server and come into the Top rankers list</p>
+            <p style="text-align:center;"><a class="pro-version-link" href="" data-role="button" data-inline="true" target="_blank">Get Pro Version</a></p>
+            <br/><br/>
+            <div id="top-rankers-page-content"></div>
+         </div>
+      </div>
+
+
+      <!-- Help page -->
+      <div id="help" data-role="page">
+         <div data-role="header" data-position="fixed" data-tap-toggle="false">
+            <h1>Help</h1>
+            <a href="#main" data-role="button">Back</a> 
+         </div>
+         <div data-role="content">
+            <h3>Virtual Exam</h3>
+            <ul>
+               <li>You will get 90 questions to solve in 90 minutes.</li>
+               <li>Try to score as much as possible.</li>
+               <li>You can quit the exam anytime with the QUIT button</li>
+               <li>After completing the exam press the SHOW RESULT button to view your score.</li>
+            </ul>
+            <h3>Top Rankers</h3>
+            <ul>
+               <li>List of top rankers.</li>
+            </ul>
+         </div>
+      </div>
+
+      <!-- Result page -->
+      <div id="result-page" data-role="page">
+         <div data-role="header" data-position="fixed" data-tap-toggle="false">
+            <h1>Result</h1>
+            <a href="#main" data-role="button">Okay</a>
+         </div>
+         <div data-role="content" id="result-page-content">
+            <div id="result-outer-bar">
+               <div id="result-inner-bar">
+               </div>
+            </div>
+            <div id="result-per-text" style="font-weight:bold;text-align:center;width:100%;"></div>
+            <br/>
+            <div id="virtual-exam-result-stats"></div>
+            <div>
+               <p>Need answers ?</p>
+               <p>With answers you will also get, 200+ practice questions to prepare you for Comptia A+ 220-801 certification</p>
+               <p>and, a Short exam section contains 10 question to quickly test your skill for Comptia A+ 220-801 certification</p>
+               <p style="text-align:center;"><a href="" target="_blank" class="pro-version-link" data-role="button" data-inline="true">Get Pro Version</a></p> 
+            </div>
+         </div>
+      </div>
+
+
+
+   </body>
+</html>

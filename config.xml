@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+    <widget xmlns   = "http://www.w3.org/ns/widgets"
+        xmlns:gap   = "http://phonegap.com/ns/1.0"
+        id          = "com.jlojic.comptiaaplus220801lite"
+        versionCode = "100" 
+        version     = "1.0.0" >
+
+    <!-- versionCode is optional and Android only -->
+
+    <name>Comptia A+ 220-801 Lite</name>
+
+    <description>
+        An app for people who are preparing for Comptia A+ 220-801 certification.
+        This is a Lite version.
+    </description>
+
+    <author href="http://www.jlojic.com" email="jlojic.apps@gmail.com">
+        JLOJIC
+    </author>
+
+    <preference name="phonegap-version" value="2.9.0" /> 
+    <preference name="orienation" value="default" />
+    <preference name="exit-on-suspend" value="true" />
+    <feature name="http://api.phonegap.com/1.0/network"/>
+    <access origin="http://www.jlojic.com" subdomains="true" />
+    <access origin="http://admit.freeiz.com" subdomains="true" />
+    <icon src="icon.png" />
+    <preference name="splash-screen-duration" value="3000"/> 
+
+
+    <!-- Android -->
+    <gap:platform name="android" />
+    <preference name="android-minSdkVersion" value="8" />
+    <preference name="android-targetSdkVersion" value="18" /> 
+    
+    <icon src="icons/android/icon36x36.png" gap:platform="android" gap:density="ldpi" />
+    <icon src="icons/android/icon48x48.png" gap:platform="android" gap:density="mdpi" />
+    <icon src="icons/android/icon72x72.png" gap:platform="android" gap:density="hdpi" />
+    <icon src="icons/android/icon96x96.png" gap:platform="android" gap:density="xhdpi" />
+    <icon src="icons/android/icon144x144.png" gap:platform="android" gap:density="xxhdpi" />
+
+
+    <gap:splash src="splash/android/splash200x320.png" gap:platform="android" gap:density="ldpi" width="200" height="320"/>
+    <gap:splash src="splash/android/splash320x480.png" gap:platform="android" gap:density="mdpi" width="320" height="480"/>
+    <gap:splash src="splash/android/splash480x800.png" gap:platform="android" gap:density="hdpi" width="480" height="800"/>
+    <gap:splash src="splash/android/splash720x1280.png" gap:platform="android" gap:density="xhdpi" width="720" height="1280"/>
+
+
+    <!-- iPhone and iPad -->
+
+
+
+    <gap:platform name="ios"/>
+
+    <icon src="icons/ios/icon57x57.png" gap:platform="ios" width="57" height="57" />
+    <icon src="icons/ios/icon72x72.png" gap:platform="ios" width="72" height="72" />
+    <icon src="icons/ios/icon76x76.png" gap:platform="ios" width="76" height="76" />
+    <icon src="icons/ios/icon114x114.png" gap:platform="ios" width="114" height="114" />
+    <icon src="icons/ios/icon120x120.png" gap:platform="ios" width="120" height="120" />
+    <icon src="icons/ios/icon152x152.png" gap:platform="ios" width="152" height="152" />
+
+    <!-- retina iPad support: PhoneGap 2.5.0+ only -->
+    <icon src="icons/ios/icon144x144.png" gap:platform="ios" width="144" height="144" />
+
+    <gap:splash src="splash/ios/splash320x480.png" gap:platform="ios" width="320" height="480" />
+    <gap:splash src="splash/ios/splash640x960.png" gap:platform="ios" width="640" height="960" />
+    <gap:splash src="splash/ios/splash640x1136.png" gap:platform="ios" width="640" height="1136" />
+    <gap:splash src="splash/ios/splash1024x768.png" gap:platform="ios" width="1024" height="768" />
+    <gap:splash src="splash/ios/splash768x1024.png" gap:platform="ios" width="768" height="1024" />
+
+    <!-- retina iPad support: PhoneGap 2.5.0+ only -->
+    <gap:splash src="splash/ios/splash2048x1496.png" gap:platform="ios" width="2048" height="1496" />
+    <gap:splash src="splash/ios/splash1496x2048.png" gap:platform="ios" width="1496" height="2048" />
+
+
+    <!-- Blackberry -->
+    <gap:platform name="blackberry" />
+    <icon src="icons/blackberry/icon144x144.png" gap:platform="blackberry" />
+    <icon src="icons/blackberry/icon144x144.png" gap:platform="blackberry" gap:state="hover"/>
+
+    <gap:splash src="splash/blackberry/splash720x1280.png" gap:platform="blackberry" />
+
+
+    <!-- windows phone -->
+    
+
+
+</widget>
